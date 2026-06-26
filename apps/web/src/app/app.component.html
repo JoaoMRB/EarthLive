@@ -1,0 +1,300 @@
+<div class="app-shell">
+  <header class="topbar">
+    <div class="topbar-shell">
+      <div class="brand-lockup">
+        <span class="brand-kicker">The Earth, live</span>
+        <div class="brand-row">
+          <div class="brand-mark" aria-hidden="true">
+            <span class="brand-core"></span>
+            <span class="brand-ring"></span>
+          </div>
+          <div class="brand-copy">
+            <h1 class="logo">Earth Live</h1>
+            <p class="brand-subtitle">See what's happening on our planet right now</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <nav class="topbar-nav" aria-label="Primary">
+          <button
+            class="nav-link"
+            type="button"
+            [class.nav-link-active]="desktopTab() === 'overview'"
+            (click)="openPanel('overview')"
+          >
+            What's happening
+          </button>
+          <button
+            class="nav-link"
+            type="button"
+            [class.nav-link-active]="desktopTab() === 'layers'"
+            (click)="openPanel('layers')"
+          >
+            Show
+          </button>
+          <button
+            class="nav-link"
+            type="button"
+            [class.nav-link-active]="desktopTab() === 'selection'"
+            (click)="openPanel('selection')"
+          >
+            Details
+          </button>
+        </nav>
+
+        <nav class="topbar-tools" aria-label="Panel controls">
+          <button
+            class="nav-link nav-link-ghost"
+            type="button"
+            [attr.aria-expanded]="!desktopPanelCollapsed()"
+            (click)="toggleDesktopPanel()"
+          >
+            {{ desktopPanelCollapsed() ? 'Menu' : 'Hide' }}
+          </button>
+        </nav>
+
+        <div class="topbar-status">
+          <span class="live-pill">
+            <span class="live-dot"></span>
+            Online
+          </span>
+          <span class="topbar-note">Real-time data</span>
+        </div>
+      </div>
+    </div>
+
+    @if (snapshot$ | async; as snapshot) {
+      <div class="topbar-metrics">
+        <div class="metric-cluster">
+          <div class="metric-chip">
+            <span class="metric-label">Flights</span>
+            <strong class="metric-value">{{ snapshot.flights }}</strong>
+          </div>
+          <div class="metric-chip">
+            <span class="metric-label">Quakes</span>
+            <strong class="metric-value">{{ snapshot.quakes }}</strong>
+          </div>
+          <div class="metric-chip metric-chip-accent">
+            <span class="metric-label">ISS</span>
+            <strong class="metric-value">{{ snapshot.issTrack }}</strong>
+          </div>
+          <div class="metric-chip">
+            <span class="metric-label">Heat</span>
+            <strong class="metric-value">{{ snapshot.fires }}</strong>
+          </div>
+        </div>
+      </div>
+    }
+  </header>
+
+  <main class="main">
+    <div class="aurora aurora-left"></div>
+    <div class="aurora aurora-right"></div>
+    <div class="grid-glow"></div>
+
+    <app-globe class="globe" />
+
+    @if (snapshot$ | async; as snapshot) {
+      <section class="hero-panel">
+        <p class="eyebrow">Live stories</p>
+        <h2 class="hero-title">See where the Earth is most alive right now</h2>
+        <p class="hero-copy">
+          From flights crossing continents to earthquakes shaking the ground — watch our planet's pulse in real time.
+        </p>
+
+        <div class="hero-actions">
+          <button class="hero-action hero-action-primary" type="button" (click)="takeMeSomewhereActive()">
+            Show me something happening now
+          </button>
+          <button class="hero-action" type="button" (click)="focusTopEvent('quake')">
+            Go to the strongest earthquake
+          </button>
+        </div>
+
+        <div class="preset-strip">
+          <button
+            class="preset-chip"
+            type="button"
+            [class.preset-chip-active]="activePreset() === 'all'"
+            (click)="applyPreset('all')"
+          >
+            Earth
+          </button>
+          <button
+            class="preset-chip"
+            type="button"
+            [class.preset-chip-active]="activePreset() === 'flights'"
+            (click)="applyPreset('flights')"
+          >
+            Flights
+          </button>
+          <button
+            class="preset-chip"
+            type="button"
+            [class.preset-chip-active]="activePreset() === 'disasters'"
+            (click)="applyPreset('disasters')"
+          >
+            Disasters
+          </button>
+          <button
+            class="preset-chip"
+            type="button"
+            [class.preset-chip-active]="activePreset() === 'space'"
+            (click)="applyPreset('space')"
+          >
+            Space
+          </button>
+        </div>
+      </section>
+    }
+
+    <aside class="floating-panel layers-panel" [class.panel-collapsed]="desktopPanelCollapsed()">
+      <div class="panel-tabs">
+        <div class="panel-header">
+          <div>
+            <p class="panel-kicker">Explore</p>
+            <h3 class="panel-title">What's on Earth</h3>
+          </div>
+          <button
+            class="panel-toggle"
+            type="button"
+            [attr.aria-expanded]="!desktopPanelCollapsed()"
+            (click)="toggleDesktopPanel()"
+          >
+            {{ desktopPanelCollapsed() ? 'Expand' : 'Collapse' }}
+          </button>
+        </div>
+
+        <div class="tab-buttons">
+          <button
+            type="button"
+            class="tab-button"
+            [class.tab-active]="desktopTab() === 'overview'"
+            (click)="setDesktopTab('overview')"
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            class="tab-button"
+            [class.tab-active]="desktopTab() === 'layers'"
+            (click)="setDesktopTab('layers')"
+          >
+            Layers
+          </button>
+          <button
+            type="button"
+            class="tab-button"
+            [class.tab-active]="desktopTab() === 'selection'"
+            (click)="setDesktopTab('selection')"
+          >
+            Selection
+          </button>
+        </div>
+
+        @if (desktopTab() === 'overview') {
+          <div class="panel-content">
+            @if (snapshot$ | async; as snapshot) {
+              <div class="panel-stack">
+                <article class="dock-card">
+                  <span class="dock-label">Right now</span>
+                  <strong class="dock-value">The most active places on Earth</strong>
+                  <p class="dock-copy">Click any card to fly there and see what's happening.</p>
+                </article>
+                <div class="panel-divider"></div>
+                <div class="events-list">
+                  @for (event of snapshot.topEvents; track event.kind) {
+                    <button class="event-card" type="button" (click)="focusTopEvent(event.kind)">
+                      <span class="event-kicker">{{ event.eyebrow }}</span>
+                      <strong class="event-title">{{ event.title }}</strong>
+                      <span class="event-detail">{{ event.detail }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (desktopTab() === 'layers') {
+          <div class="panel-content">
+            <app-layer-toggle />
+          </div>
+        }
+
+        @if (desktopTab() === 'selection') {
+          <div class="panel-content">
+            <app-info-panel />
+          </div>
+        }
+      </div>
+    </aside>
+
+    <aside class="mobile-sheet spartan-mobile-sheet" [class.sheet-open]="mobileSheetOpen()">
+      <button class="sheet-handle" (click)="toggleMobileSheet()" [attr.aria-expanded]="mobileSheetOpen()">
+        <span class="handle-bar"></span>
+        <span class="handle-label">Menu</span>
+      </button>
+      <div class="sheet-body">
+        <div class="panel-tabs mobile-tabs">
+          <div class="tab-list" aria-label="Mobile control tabs">
+            <button
+              type="button"
+              class="tab-trigger"
+              [class.tab-active]="mobileTab() === 'overview'"
+              (click)="setMobileTab('overview')"
+            >
+              What's happening
+            </button>
+            <button
+              type="button"
+              class="tab-trigger"
+              [class.tab-active]="mobileTab() === 'layers'"
+              (click)="setMobileTab('layers')"
+            >
+              Show
+            </button>
+            <button
+              type="button"
+              class="tab-trigger"
+              [class.tab-active]="mobileTab() === 'selection'"
+              (click)="setMobileTab('selection')"
+            >
+              Details
+            </button>
+          </div>
+
+          @if (mobileTab() === 'overview') {
+            <div class="panel-content">
+              @if (snapshot$ | async; as snapshot) {
+                <div class="panel-stack">
+                  <article class="dock-card">
+                    <span class="dock-label">Happening now</span>
+                    <strong class="dock-value">{{ snapshot.topEvents[0].title }}</strong>
+                    <p class="dock-copy">{{ snapshot.topEvents[0].detail }}</p>
+                  </article>
+                  <button class="mobile-tour-button" type="button" (click)="takeMeSomewhereActive()">
+                    Take me there
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          @if (mobileTab() === 'layers') {
+            <div class="panel-content">
+              <app-layer-toggle />
+            </div>
+          }
+
+          @if (mobileTab() === 'selection') {
+            <div class="panel-content">
+              <app-info-panel />
+            </div>
+          }
+        </div>
+      </div>
+    </aside>
+  </main>
+</div>
