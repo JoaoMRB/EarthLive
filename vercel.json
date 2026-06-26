@@ -1,0 +1,6 @@
+{
+  "buildCommand": "npm run web:build",
+  "outputDirectory": "dist/web",
+  "framework": "other",
+  "installCommand": "npm ci --workspace=web"
+}
