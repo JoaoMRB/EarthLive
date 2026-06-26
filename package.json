@@ -1,0 +1,23 @@
+{
+  "name": "earthlive",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "apps/api"
+  ],
+  "scripts": {
+    "web:dev": "npm run start -w web",
+    "web:build": "npm run build -w web",
+    "api:dev": "npm run dev -w api",
+    "api:build": "npm run build -w api",
+    "api:start": "npm run start -w api",
+    "build": "npm run api:build && npm run web:build",
+    "dev": "concurrently -n api,web -c blue,green \"npm run api:dev\" \"npm run web:dev\""
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.5.0",
+    "concurrently": "^9.1.2",
+    "tailwindcss": "^4.3.0"
+  }
+}
