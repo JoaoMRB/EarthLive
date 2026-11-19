@@ -168,15 +168,29 @@ const TLE_SOURCES = [
   },
 ];
 
+const TLE_KEY = 'earthlive:iss-tle';
+
 export async function loadIssOrbit(): Promise<SatRec> {
   let lastErr: unknown;
   for (const src of TLE_SOURCES) {
     try {
       const [l1, l2] = await src();
+      try {
+        localStorage.setItem(TLE_KEY, JSON.stringify([l1, l2]));
+      } catch {
+        /* storage unavailable */
+      }
       return twoline2satrec(l1, l2);
     } catch (err) {
       lastErr = err;
     }
+  }
+  // Offline: a recent saved orbit is still close enough to show where the ISS is.
+  try {
+    const saved = JSON.parse(localStorage.getItem(TLE_KEY) ?? 'null') as [string, string] | null;
+    if (saved) return twoline2satrec(saved[0], saved[1]);
+  } catch {
+    /* no usable copy */
   }
   throw lastErr;
 }
