@@ -1,0 +1,76 @@
+name: Deploy
+
+# Builds the site, refreshes the data snapshots (flights + wildfires) and
+# publishes everything to GitHub Pages. Runs on every push to main and every
+# 15 minutes, so the snapshot flights (option A) stay fresh.
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # Start from the currently published data, so a failing source keeps the
+      # last good snapshot instead of shipping an empty layer.
+      - name: Restore previous snapshots
+        continue-on-error: true
+        run: |
+          mkdir -p public/data
+          for f in flights fires; do
+            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/$f.json" -o "public/data/$f.json" || true
+          done
+
+      - name: Fetch data snapshots
+        run: npm run data
+        env:
+          # Optional. Create a free OpenSky API client and add these as
+          # repository secrets for a higher rate limit.
+          OPENSKY_CLIENT_ID: ${{ secrets.OPENSKY_CLIENT_ID }}
+          OPENSKY_CLIENT_SECRET: ${{ secrets.OPENSKY_CLIENT_SECRET }}
+
+      - name: Build
+        run: npm run build
+        env:
+          # Optional (option B). Repository variable with your Worker URL,
+          # e.g. https://earthlive-flights.<you>.workers.dev/flights
+          VITE_FLIGHTS_LIVE_URL: ${{ vars.FLIGHTS_LIVE_URL }}
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
