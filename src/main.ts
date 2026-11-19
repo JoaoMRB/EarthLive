@@ -16,6 +16,7 @@ import { DEFAULT_ON, GROUPS, LAYERS, layerDef, type Group, type LayerId } from '
 import { EarthMap, PALETTES, type DataLayer, type FC, type Pick, type Theme, type View } from './map';
 import { aqiText, compass, loadPlace, weatherText, type PlaceInfo } from './place';
 import { el, fmtInt, fmtIsoDay, fmtNum, relTime, store } from './util';
+import { applyStatic, getLang, onLangChange, setLang, t } from './i18n';
 import { TEMP_SCALE, WIND_SCALE, loadWeather, renderField, type WeatherGrid } from './weather';
 import { WindParticles } from './wind';
 
@@ -337,12 +338,12 @@ const liveText = document.getElementById('live-text')!;
 function renderLive(): void {
   if (!state.lastOk) {
     liveEl.dataset.state = state.errors.size ? 'error' : 'loading';
-    liveText.textContent = state.errors.size ? 'Sem ligação' : 'A carregar…';
+    liveText.textContent = state.errors.size ? t().live.offline : t().page.loading;
     return;
   }
   liveEl.dataset.state = state.errors.size >= 3 ? 'error' : 'ok';
   const s = Math.max(0, Math.round((Date.now() - state.lastOk) / 1000));
-  liveText.textContent = s < 5 ? 'Atualizado agora' : `Atualizado há ${s < 60 ? `${s} s` : `${Math.round(s / 60)} min`}`;
+  liveText.textContent = s < 5 ? t().live.justNow : t().live.ago(s < 60 ? `${s} s` : `${Math.round(s / 60)} min`);
 }
 
 // ---------- Layers panel (tabs per theme) ----------
@@ -352,6 +353,8 @@ const layerList = document.getElementById('layer-list')!;
 const groupExtra = document.getElementById('group-extra')!;
 const tabBtns = new Map<Group, HTMLButtonElement>();
 const layerRows = new Map<LayerId, { btn: HTMLButtonElement; sub: HTMLElement; dot: HTMLElement }>();
+// Pollers that wait for their layer to be enabled can be started immediately.
+const kickers: Record<string, () => void> = {};
 
 const LAYER_COLOR: Record<LayerId, (t: Theme) => string> = {
   flights: (t) => PALETTES[t].flights,
@@ -373,7 +376,7 @@ const LAYER_COLOR: Record<LayerId, (t: Theme) => string> = {
 for (const g of GROUPS) {
   const icon = svg(g.icon);
   const badge = el('span', { class: 'tab-badge' });
-  const b = el('button', { type: 'button', role: 'tab', class: 'tab', id: `tab-${g.id}` }, [icon, el('span', { class: 'tab-label' }, [g.name]), badge]);
+  const b = el('button', { type: 'button', role: 'tab', class: 'tab', id: `tab-${g.id}` }, [icon, el('span', { class: 'tab-label' }), badge]);
   b.addEventListener('click', () => {
     state.group = g.id;
     store.set('group', g.id);
@@ -388,7 +391,7 @@ for (const def of LAYERS) {
   const sub = el('span', { class: 'layer-sub' });
   const btn = el('button', { type: 'button', class: 'layer-row', 'aria-pressed': 'false' }, [
     el('span', { class: 'layer-swatch' }, [dot]),
-    el('span', { class: 'layer-text' }, [el('span', { class: 'layer-name' }, [def.name]), sub]),
+    el('span', { class: 'layer-text' }, [el('span', { class: 'layer-name' }), sub]),
     el('span', { class: 'switch', 'aria-hidden': 'true' }, [el('span', { class: 'knob' })]),
   ]) as HTMLButtonElement;
   btn.addEventListener('click', () => toggleLayer(def.id));
@@ -415,52 +418,50 @@ function toggleLayer(id: LayerId): void {
   if (on && id === 'radar' && !state.radar) kick('radar');
 }
 
-// Pollers that wait for their layer to be enabled can be started immediately.
-const kickers: Record<string, () => void> = {};
 function kick(name: string): void {
   kickers[name]?.();
 }
 
-const PERIOD_LABEL: Record<QuakePeriod, string> = { hour: 'última hora', day: 'últimas 24 h', week: 'últimos 7 dias' };
-
 function layerSub(id: LayerId): string {
-  if (state.errors.has(id === 'wind' || id === 'temp' ? 'weather' : id)) return 'Indisponível de momento';
+  const T = t().sub;
+  const loading = t().page.loading;
+  if (state.errors.has(id === 'wind' || id === 'temp' ? 'weather' : id)) return T.unavailable;
   switch (id) {
     case 'flights':
       return state.flightsT
-        ? `${fmtInt(state.flights.length)} no ar · ${state.flightSource === 'live' ? 'tempo real' : relTime(state.flightsT * 1000)}`
-        : 'A carregar…';
+        ? T.flights(fmtInt(state.flights.length), state.flightSource === 'live' ? T.realtime : relTime(state.flightsT * 1000))
+        : loading;
     case 'iss':
-      return state.iss ? 'Órbita em tempo real' : 'A carregar…';
+      return state.iss ? T.iss : loading;
     case 'quakes':
-      return state.quakesLoaded ? `${fmtInt(state.quakes.length)} · ${PERIOD_LABEL[state.period]}` : 'A carregar…';
+      return state.quakesLoaded ? `${fmtInt(state.quakes.length)} · ${T.period[state.period]}` : loading;
     case 'fires':
-      return state.firesT ? `${fmtInt(state.fires.length)} zonas ativas · 24 h` : 'A carregar…';
+      return state.firesT ? T.fires(fmtInt(state.fires.length)) : loading;
     case 'volcanoes':
     case 'storms': {
-      if (!state.eventsLoaded) return 'A carregar…';
+      if (!state.eventsLoaded) return loading;
       const n = state.events.filter((e) => e.kind === id).length;
-      return id === 'volcanoes' ? `${n} com atividade em curso` : n ? `${n} ativas agora` : 'Nenhuma ativa agora';
+      return id === 'volcanoes' ? T.volcanoes(fmtInt(n)) : n ? T.storms(fmtInt(n)) : T.noStorms;
     }
     case 'wind':
     case 'temp':
       return state.weather
-        ? `Previsão GFS para as ${new Date(state.weather.validTime).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}`
-        : state.layers[id] ? 'A carregar…' : 'Modelo global NOAA GFS';
+        ? T.gfsAt(new Date(state.weather.validTime).toLocaleTimeString(t().locale, { hour: '2-digit', minute: '2-digit' }))
+        : state.layers[id] ? loading : T.gfs;
     case 'radar':
-      return state.radar ? `Radar · ${relTime(state.radar.time)}` : 'Radares meteorológicos';
+      return state.radar ? T.radarAt(relTime(state.radar.time)) : T.radar;
     case 'clouds':
-      return 'Satélites geostacionários · EUMETSAT';
+      return T.clouds;
     case 'satellite':
-      return state.layers.satellite ? `Cores reais · ${fmtDay(state.dates.satellite)}` : 'Imagem real do dia (NASA)';
+      return state.layers.satellite ? T.satelliteOn(fmtDay(state.dates.satellite)) : T.satellite;
     case 'aerosol':
-      return state.layers.aerosol ? `Aerossóis · ${fmtDay(state.dates.aerosol)}` : 'Fumo, poeira e poluição';
+      return state.layers.aerosol ? T.aerosolOn(fmtDay(state.dates.aerosol)) : T.aerosol;
     case 'lights':
       return state.layers.lights
-        ? state.dates.lights === LIGHTS_COMPOSITE ? 'Composição sem nuvens · 2016' : `Noite de ${fmtDay(state.dates.lights)}`
-        : 'Cidades vistas de noite (NASA)';
+        ? state.dates.lights === LIGHTS_COMPOSITE ? T.lightsComposite : T.lightsNight(fmtDay(state.dates.lights))
+        : T.lights;
     case 'daynight':
-      return 'Sol e crepúsculo agora';
+      return T.daynight;
   }
 }
 
@@ -472,6 +473,7 @@ function renderLayers(): void {
     b.tabIndex = on ? 0 : -1;
     const n = LAYERS.filter((l) => l.group === g.id && state.layers[l.id]).length;
     (b.querySelector('.tab-badge') as HTMLElement).textContent = n ? String(n) : '';
+    (b.querySelector('.tab-label') as HTMLElement).textContent = t().groups[g.id];
   }
   layerList.setAttribute('aria-labelledby', `tab-${state.group}`);
   const ids = LAYERS.filter((l) => l.group === state.group).map((l) => l.id);
@@ -485,6 +487,7 @@ function renderLayers(): void {
     row.btn.setAttribute('aria-pressed', String(state.layers[id]));
     row.dot.style.background = LAYER_COLOR[id](state.theme);
     row.sub.textContent = layerSub(id);
+    (row.btn.querySelector('.layer-name') as HTMLElement).textContent = t().layers[id];
   }
 }
 
@@ -502,11 +505,12 @@ function segmented(label: string, options: { value: string; label: string }[], c
 }
 
 function renderGroupExtra(): void {
+  const X = t().extra;
   groupExtra.replaceChildren();
   if (state.group === 'move' && config.liveFlightsUrl) {
     groupExtra.append(
-      el('span', { class: 'muted small' }, ['Voos']),
-      segmented('Fonte dos voos', [{ value: 'snapshot', label: 'A cada 15 min' }, { value: 'live', label: 'Tempo real' }], state.flightSource, (v) => {
+      el('span', { class: 'muted small' }, [X.flights]),
+      segmented(X.flightSource, [{ value: 'snapshot', label: X.every15 }, { value: 'live', label: X.realtime }], state.flightSource, (v) => {
         state.flightSource = v as FlightSource;
         store.set('flightSource', v);
         refreshFlights();
@@ -514,15 +518,15 @@ function renderGroupExtra(): void {
     );
   } else if (state.group === 'nature') {
     groupExtra.append(
-      el('span', { class: 'muted small' }, ['Sismos']),
-      segmented('Período dos sismos', [{ value: 'hour', label: '1 h' }, { value: 'day', label: '24 h' }, { value: 'week', label: '7 d' }], state.period, (v) => {
+      el('span', { class: 'muted small' }, [X.quakes]),
+      segmented(X.quakePeriod, [{ value: 'hour', label: '1 h' }, { value: 'day', label: '24 h' }, { value: 'week', label: '7 d' }], state.period, (v) => {
         state.period = v as QuakePeriod;
         store.set('period', v);
         refreshQuakes();
       }),
     );
   } else if (state.group === 'climate' || state.group === 'night') {
-    groupExtra.append(el('span', { class: 'muted small hint' }, ['Toca no mapa para ver o tempo e o ar nesse local.']));
+    groupExtra.append(el('span', { class: 'muted small hint' }, [X.tapHint]));
   }
   groupExtra.hidden = !groupExtra.childElementCount;
 }
@@ -536,7 +540,7 @@ const timebar = document.getElementById('timebar')!;
 const dateInput = document.getElementById('date-input') as HTMLInputElement;
 
 function fmtDay(day: string): string {
-  return day === LIGHTS_COMPOSITE ? 'Média 2016' : fmtIsoDay(day);
+  return day === LIGHTS_COMPOSITE ? t().time.composite : fmtIsoDay(day);
 }
 
 function pickDate(layer: DatedLayer, current: string, onPick: (d: string) => void): void {
@@ -563,9 +567,9 @@ function dateControl(layer: DatedLayer, side: 'a' | 'b', label: string | null): 
     if (layer === 'lights' && next < '2024-03-25' && delta < 0) return set(LIGHTS_COMPOSITE);
     set(clampDay(layer, next));
   };
-  const prev = iconBtn('m15 6-6 6 6 6', 'Dia anterior', () => step(-1));
-  const next = iconBtn('m9 6 6 6-6 6', 'Dia seguinte', () => step(1));
-  const day = el('button', { type: 'button', class: 'date-btn', 'aria-label': `Escolher data (${fmtDay(cur)})` }, [fmtDay(cur)]);
+  const prev = iconBtn('m15 6-6 6 6 6', t().time.prevDay, () => step(-1));
+  const next = iconBtn('m9 6 6 6-6 6', t().time.nextDay, () => step(1));
+  const day = el('button', { type: 'button', class: 'date-btn', 'aria-label': t().time.pickDate(fmtDay(cur)) }, [fmtDay(cur)]);
   day.addEventListener('click', () => pickDate(layer, cur, set));
   const kids: HTMLElement[] = [];
   if (label) kids.push(el('span', { class: 'side-label' }, [label]));
@@ -578,26 +582,27 @@ function renderTimebar(): void {
   timebar.hidden = !layer;
   document.body.classList.toggle('has-timebar', !!layer);
   if (!layer) return;
+  const TT = t().time;
   const kids: HTMLElement[] = [];
   if (state.comparing) {
-    kids.push(dateControl(layer, 'a', 'Esq.'), el('span', { class: 'tb-sep' }), dateControl(layer, 'b', 'Dir.'));
-    const sync = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(state.compareSynced) }, ['Mesmo local']);
-    sync.title = 'Desliga para comparar dois lugares diferentes';
+    kids.push(dateControl(layer, 'a', TT.left), el('span', { class: 'tb-sep' }), dateControl(layer, 'b', TT.right));
+    const sync = el('button', { type: 'button', class: 'chip', 'aria-pressed': String(state.compareSynced) }, [TT.sameplace]);
+    sync.title = TT.sameplaceTitle;
     sync.addEventListener('click', () => {
       state.compareSynced = !state.compareSynced;
       compare?.setSynced(state.compareSynced);
       renderTimebar();
     });
-    kids.push(sync, iconBtn('M6 6l12 12M18 6 6 18', 'Sair da comparação', () => {
+    kids.push(sync, iconBtn('M6 6l12 12M18 6 6 18', TT.exitCompare, () => {
       state.comparing = false;
       syncCompare();
       renderTimebar();
     }));
   } else {
-    kids.push(el('span', { class: 'tb-title' }, [layerDef(layer).name]));
+    kids.push(el('span', { class: 'tb-title' }, [t().layers[layer]]));
     if (layer === 'lights') {
       kids.push(
-        segmented('Tipo de imagem', [{ value: 'composite', label: 'Média 2016' }, { value: 'night', label: 'Noite a noite' }],
+        segmented(TT.imageType, [{ value: 'composite', label: TT.composite }, { value: 'night', label: TT.nightly }],
           state.dates.lights === LIGHTS_COMPOSITE ? 'composite' : 'night', (v) => {
             state.dates.lights = v === 'composite' ? LIGHTS_COMPOSITE : utcDay(-1);
             void applyOverlays();
@@ -606,7 +611,7 @@ function renderTimebar(): void {
       );
     }
     if (!(layer === 'lights' && state.dates.lights === LIGHTS_COMPOSITE)) kids.push(dateControl(layer, 'a', null));
-    const cmp = el('button', { type: 'button', class: 'chip' }, [svg('M12 3v18M4 7h5v10H4zM15 7h5v10h-5z'), 'Comparar']);
+    const cmp = el('button', { type: 'button', class: 'chip' }, [svg('M12 3v18M4 7h5v10H4zM15 7h5v10h-5z'), TT.compare]);
     cmp.addEventListener('click', () => {
       state.comparing = true;
       state.compareSynced = true;
@@ -651,24 +656,24 @@ function renderLegend(): void {
   let bg = '';
   let ticks: string[] = [];
   if (f === 'temp') {
-    title = 'Temperatura · °C';
+    title = t().legend.temp;
     bg = gradient(TEMP_SCALE);
     ticks = ['-40', '-20', '0', '20', '40'];
   } else if (f === 'wind') {
-    title = 'Vento · km/h';
+    title = t().legend.wind;
     bg = gradient(WIND_SCALE);
     ticks = ['0', '25', '50', '75', '100'];
   } else if (f === 'aerosol') {
-    title = 'Aerossóis (fumo, poeira, poluição)';
+    title = t().legend.aerosol;
     bg = 'linear-gradient(90deg, #FFFFB2, #FECC5C, #FD8D3C, #F03B20, #BD0026)';
-    ticks = ['Limpo', '', '', '', 'Denso'];
+    ticks = [t().legend.clean, '', '', '', t().legend.dense];
   }
   legend.hidden = !title;
   if (!title) return;
   legend.replaceChildren(
     el('span', { class: 'legend-title' }, [title]),
     el('span', { class: 'legend-bar', style: `background:${bg}` }),
-    el('span', { class: 'legend-ticks' }, ticks.map((t) => el('span', {}, [t]))),
+    el('span', { class: 'legend-ticks' }, ticks.map((x) => el('span', {}, [x]))),
   );
 }
 
@@ -698,6 +703,29 @@ document.getElementById('theme-btn')!.addEventListener('click', () => {
   wind.setTheme(state.theme === 'dark');
   renderLayers();
 });
+// ---------- Language ----------
+
+applyStatic();
+const langBtn = document.getElementById('lang-btn')!;
+function syncLangBtn(): void {
+  langBtn.textContent = getLang() === 'pt' ? 'EN' : 'PT';
+}
+syncLangBtn();
+langBtn.addEventListener('click', () => setLang(getLang() === 'pt' ? 'en' : 'pt'));
+onLangChange(() => {
+  syncLangBtn();
+  earth.setLanguage(getLang());
+  compare?.setLanguage(getLang());
+  renderLive();
+  renderLayers();
+  renderGroupExtra();
+  renderTimebar();
+  renderLegend();
+  if (!searchBox.hidden) void searchPlaces();
+  detailKey = '';
+  refreshDetail();
+});
+
 // Overlays and night shading are re-applied every time the basemap style loads.
 earth.onStyle(() => void applyOverlays());
 
@@ -758,7 +786,7 @@ async function searchPlaces(): Promise<void> {
   searchAbort = new AbortController();
   try {
     const res = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=pt&format=json`,
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=5&language=${getLang()}&format=json`,
       { signal: searchAbort.signal },
     );
     const j = (await res.json()) as { results?: { name: string; country?: string; admin1?: string; latitude: number; longitude: number }[] };
@@ -781,17 +809,17 @@ function renderSearch(): void {
   const q = raw.toUpperCase().replace(/\s+/g, '');
   searchResults.replaceChildren();
   if (!q) {
-    searchResults.append(el('li', { class: 'muted small search-hint' }, ['Escreve um voo (TAP1234), um lugar (Lisboa) ou “ISS”.']));
+    searchResults.append(el('li', { class: 'muted small search-hint' }, [t().search.hint]));
     return;
   }
   const items: SearchItem[] = [];
-  if ('ISS'.startsWith(q) && state.iss) items.push({ label: 'ISS', sub: 'Estação Espacial Internacional', go: () => focusIss() });
+  if ('ISS'.startsWith(q) && state.iss) items.push({ label: 'ISS', sub: t().search.issName, go: () => focusIss() });
   for (const f of state.flights) {
     if (items.length >= 5) break;
     if (f.callsign && f.callsign.toUpperCase().startsWith(q)) {
       items.push({
         label: f.callsign,
-        sub: `Voo · ${f.country} · ${fmtInt(f.altM)} m`,
+        sub: t().search.flight(f.country, fmtInt(f.altM)),
         go: () => {
           const [lng, lat] = extrapolate(f, nowS());
           earth.map.flyTo({ center: [lng, lat], zoom: Math.max(earth.map.getZoom(), 6) });
@@ -802,7 +830,7 @@ function renderSearch(): void {
   }
   items.push(...placeItems);
   if (!items.length) {
-    searchResults.append(el('li', { class: 'muted small search-hint' }, ['A procurar…']));
+    searchResults.append(el('li', { class: 'muted small search-hint' }, [t().search.searching]));
     return;
   }
   for (const it of items) {
@@ -912,7 +940,7 @@ function tile(label: string, value: string): HTMLElement {
 }
 
 function card(kicker: string, title: string, sub: string | null, body: HTMLElement[], actions: HTMLElement[] = []): HTMLElement[] {
-  const close = el('button', { type: 'button', class: 'close', 'aria-label': 'Fechar' }, [svg('M6 6l12 12M18 6 6 18')]);
+  const close = el('button', { type: 'button', class: 'close', 'aria-label': t().card.close }, [svg('M6 6l12 12M18 6 6 18')]);
   close.addEventListener('click', () => select(null));
   return [
     el('div', { class: 'detail-head' }, [
@@ -928,7 +956,7 @@ function card(kicker: string, title: string, sub: string | null, body: HTMLEleme
   ];
 }
 
-const tiles = (t: HTMLElement[]) => el('div', { class: 'tiles' }, t);
+const tiles = (items: HTMLElement[]) => el('div', { class: 'tiles' }, items);
 
 function button(label: string, primary: boolean, onClick: () => void): HTMLElement {
   const b = el('button', { type: 'button', class: primary ? 'btn btn-primary' : 'btn' }, [label]);
@@ -941,7 +969,7 @@ function link(label: string, href: string): HTMLElement {
 }
 
 const fmtLat = (v: number) => `${fmtNum(Math.abs(v), 2)}° ${v >= 0 ? 'N' : 'S'}`;
-const fmtLng = (v: number) => `${fmtNum(Math.abs(v), 2)}° ${v >= 0 ? 'E' : 'O'}`;
+const fmtLng = (v: number) => `${fmtNum(Math.abs(v), 2)}° ${v >= 0 ? t().east : t().west}`;
 
 function localTime(p: PlaceInfo): string {
   const d = new Date(Date.now() + p.utcOffsetS * 1000);
@@ -950,26 +978,29 @@ function localTime(p: PlaceInfo): string {
 
 function placeRows(p: PlaceInfo): [string, string][] {
   const sun = sunAltitude(p.lat, p.lng);
+  const C = t().card;
+  const r = C.rows;
   return [
-    ['Hora local', `${localTime(p)} · ${sun > 0 ? 'dia' : sun > -6 ? 'crepúsculo' : 'noite'}`],
-    ['Tempo', weatherText(p.code)],
-    ['Temperatura', `${fmtNum(p.temp, 1)} °C`],
-    ['Sensação', `${fmtNum(p.feels, 1)} °C`],
-    ['Vento', `${fmtInt(p.windKmh)} km/h ${compass(p.windDir)}`],
-    ['Humidade', `${fmtInt(p.humidity)} %`],
-    ['Nuvens', `${fmtInt(p.cloud)} %`],
-    ['Precipitação', `${fmtNum(p.precip, 1)} mm`],
-    ['Qualidade do ar', p.aqi != null ? `${aqiText(p.aqi)} (${fmtInt(p.aqi)})` : '—'],
-    ['PM2.5', p.pm25 != null ? `${fmtNum(p.pm25, 1)} µg/m³` : '—'],
-    ['Sol', `${fmtInt(sun)}° acima do horizonte`.replace(/^-(\d+)° acima/, '$1° abaixo')],
+    [r.localTime, `${localTime(p)} · ${sun > 0 ? C.day : sun > -6 ? C.twilight : C.night}`],
+    [r.weather, weatherText(p.code)],
+    [r.temp, `${fmtNum(p.temp, 1)} °C`],
+    [r.feels, `${fmtNum(p.feels, 1)} °C`],
+    [r.wind, `${fmtInt(p.windKmh)} km/h ${compass(p.windDir)}`],
+    [r.humidity, `${fmtInt(p.humidity)} %`],
+    [r.clouds, `${fmtInt(p.cloud)} %`],
+    [r.precip, `${fmtNum(p.precip, 1)} mm`],
+    [r.air, p.aqi != null ? `${aqiText(p.aqi)} (${fmtInt(p.aqi)})` : '—'],
+    [r.pm25, p.pm25 != null ? `${fmtNum(p.pm25, 1)} µg/m³` : '—'],
+    [r.sun, sun >= 0 ? C.sunAbove(fmtInt(sun)) : C.sunBelow(fmtInt(-sun))],
   ];
 }
 
 function placeCard(s: Extract<Selection, { kind: 'place' }>): HTMLElement[] {
   const [lng, lat] = s.lngLat;
   const coords = `${fmtLat(lat)} · ${fmtLng(lng)}`;
-  if (s.error) return card('Local', coords, null, [el('p', { class: 'muted' }, ['Não foi possível obter o tempo para este local.'])]);
-  if (!s.info) return card('Local', coords, null, [el('p', { class: 'muted' }, ['A obter tempo e qualidade do ar…'])]);
+  const C = t().card;
+  if (s.error) return card(C.place, coords, null, [el('p', { class: 'muted' }, [C.placeError])]);
+  if (!s.info) return card(C.place, coords, null, [el('p', { class: 'muted' }, [C.placeLoading])]);
   const p = s.info;
   const a = state.placeA;
 
@@ -985,12 +1016,12 @@ function placeCard(s: Extract<Selection, { kind: 'place' }>): HTMLElement[] {
     const rows = ra.map(([label, va], i) =>
       el('div', { class: 'cmp-row' }, [el('span', { class: 'muted small' }, [label]), el('span', {}, [va]), el('span', {}, [rb[i][1]])]),
     );
-    return card('Comparação', 'Dois locais', 'A = primeiro ponto, B = este ponto', [el('div', { class: 'cmp-table' }, [head, ...rows])], [
-      button('Nova comparação', false, () => {
+    return card(C.compareKicker, C.compareTitle, C.compareSub, [el('div', { class: 'cmp-table' }, [head, ...rows])], [
+      button(C.newCompare, false, () => {
         state.placeA = p;
         refreshDetail();
       }),
-      button('Terminar', true, () => {
+      button(C.finish, true, () => {
         state.placeA = null;
         refreshDetail();
       }),
@@ -999,13 +1030,13 @@ function placeCard(s: Extract<Selection, { kind: 'place' }>): HTMLElement[] {
 
   const rows = placeRows(p);
   return card(
-    'Local',
+    C.place,
     coords,
-    `${weatherText(p.code)} · ${localTime(p)} hora local`,
+    `${weatherText(p.code)} · ${C.localTime(localTime(p))}`,
     [tiles(rows.slice(2).map(([l, v]) => tile(l, v)))],
     a
-      ? [el('p', { class: 'muted small cmp-hint' }, ['Agora toca noutro ponto do mapa para comparar.'])]
-      : [button('Comparar com outro local', true, () => {
+      ? [el('p', { class: 'muted small cmp-hint' }, [C.compareHint])]
+      : [button(C.compareWith, true, () => {
           state.placeA = p;
           refreshDetail();
         })],
@@ -1019,73 +1050,74 @@ function refreshDetail(): void {
     features: selectedPoints().map((c) => ({ type: 'Feature', geometry: { type: 'Point', coordinates: c }, properties: {} })),
   });
 
+  const C = t().card;
   let content: HTMLElement[] | null = null;
   if (s?.kind === 'flights') {
     const f = state.flightsById.get(s.id);
     if (f) {
       const [lng, lat] = extrapolate(f, nowS());
-      content = card('Voo', f.callsign || f.id.toUpperCase(), f.country || null, [
+      content = card(C.flight, f.callsign || f.id.toUpperCase(), f.country || null, [
         tiles([
-          tile('Altitude', `${fmtInt(f.altM)} m`),
-          tile('Velocidade', `${fmtInt(f.speedMs * 3.6)} km/h`),
-          tile('Rumo', `${fmtInt(f.heading)}°`),
-          tile('Vertical', `${f.vRate > 0 ? '+' : ''}${fmtNum(f.vRate, 1)} m/s`),
-          tile('Posição', `${fmtNum(lat, 2)}°, ${fmtNum(lng, 2)}°`),
-          tile('Dados', state.flightSource === 'live' ? 'tempo real' : relTime(f.t * 1000)),
+          tile(C.altitude, `${fmtInt(f.altM)} m`),
+          tile(C.speed, `${fmtInt(f.speedMs * 3.6)} km/h`),
+          tile(C.heading, `${fmtInt(f.heading)}°`),
+          tile(C.vertical, `${f.vRate > 0 ? '+' : ''}${fmtNum(f.vRate, 1)} m/s`),
+          tile(C.position, `${fmtNum(lat, 2)}°, ${fmtNum(lng, 2)}°`),
+          tile(C.data, state.flightSource === 'live' ? C.realtime : relTime(f.t * 1000)),
         ]),
-      ], [button('Centrar', true, () => earth.map.flyTo({ center: extrapolate(f, nowS()), zoom: Math.max(earth.map.getZoom(), 6) }))]);
+      ], [button(C.center, true, () => earth.map.flyTo({ center: extrapolate(f, nowS()), zoom: Math.max(earth.map.getZoom(), 6) }))]);
     }
   } else if (s?.kind === 'quakes') {
     const q = state.quakesById.get(s.id);
     if (q) {
-      content = card('Sismo', `M ${fmtNum(q.mag, 1)}`, q.place || null, [
+      content = card(C.quake, `M ${fmtNum(q.mag, 1)}`, q.place || null, [
         tiles([
-          tile('Profundidade', `${fmtNum(q.depth, 1)} km`),
-          tile('Quando', relTime(q.time)),
-          tile('Tsunami', q.tsunami ? 'Alerta emitido' : 'Sem alerta'),
-          tile('Fonte', 'USGS'),
+          tile(C.depth, `${fmtNum(q.depth, 1)} km`),
+          tile(C.when, relTime(q.time)),
+          tile(C.tsunami, q.tsunami ? C.tsunamiYes : C.tsunamiNo),
+          tile(C.source, 'USGS'),
         ]),
-      ], /^https:\/\/earthquake\.usgs\.gov\//.test(q.url) ? [link('Abrir no USGS', q.url)] : []);
+      ], /^https:\/\/earthquake\.usgs\.gov\//.test(q.url) ? [link(C.openUsgs, q.url)] : []);
     }
   } else if (s?.kind === 'fires') {
     const f = s.fire;
-    content = card('Incêndio', 'Zona ativa (~5 km)', `${fmtLat(f.lat)} · ${fmtLng(f.lng)}`, [
+    content = card(C.fire, C.fireZone, `${fmtLat(f.lat)} · ${fmtLng(f.lng)}`, [
       tiles([
-        tile('Potência', `${fmtNum(f.frp, 1)} MW`),
-        tile('Confiança', ['Baixa', 'Normal', 'Alta'][f.conf] ?? '—'),
-        tile('Detetado', f.time ? relTime(f.time * 1000) : '—'),
-        tile('Deteções', fmtInt(f.count)),
+        tile(C.power, `${fmtNum(f.frp, 1)} MW`),
+        tile(C.confidence, C.confLevels[f.conf] ?? '—'),
+        tile(C.detected, f.time ? relTime(f.time * 1000) : '—'),
+        tile(C.detections, fmtInt(f.count)),
       ]),
     ]);
   } else if (s?.kind === 'volcanoes' || s?.kind === 'storms') {
     const e = state.eventsById.get(s.id);
     if (e) {
-      const t = s.kind === 'volcanoes'
+      const items = s.kind === 'volcanoes'
         ? [
-            tile('Em atividade desde', fmtIsoDay(new Date(e.firstTime).toISOString().slice(0, 10))),
-            tile('Estado', 'Em curso'),
-            tile('Posição', `${fmtLat(e.lat)}, ${fmtLng(e.lng)}`),
-            tile('Fonte', 'NASA EONET'),
+            tile(C.activeSince, fmtIsoDay(new Date(e.firstTime).toISOString().slice(0, 10))),
+            tile(C.status, C.ongoing),
+            tile(C.position, `${fmtLat(e.lat)}, ${fmtLng(e.lng)}`),
+            tile(C.source, 'NASA EONET'),
           ]
         : [
-            tile('Vento máximo', e.windKts != null ? `${fmtInt(e.windKts * 1.852)} km/h` : '—'),
-            tile('Última posição', relTime(e.time)),
-            tile('Desde', relTime(e.firstTime)),
-            tile('Pontos da trajetória', fmtInt(e.track.length)),
+            tile(C.maxWind, e.windKts != null ? `${fmtInt(e.windKts * 1.852)} km/h` : '—'),
+            tile(C.lastPosition, relTime(e.time)),
+            tile(C.since, relTime(e.firstTime)),
+            tile(C.trackPoints, fmtInt(e.track.length)),
           ];
-      content = card(s.kind === 'volcanoes' ? 'Vulcão' : 'Tempestade', e.title, null, [tiles(t)], e.sourceUrl ? [link('Ver fonte', e.sourceUrl)] : []);
+      content = card(s.kind === 'volcanoes' ? C.volcano : C.storm, e.title, null, [tiles(items)], e.sourceUrl ? [link(C.viewSource, e.sourceUrl)] : []);
     }
   } else if (s?.kind === 'iss' && state.iss) {
     const i = state.iss;
-    content = card('Estação espacial', 'ISS', null, [
+    content = card(C.station, 'ISS', null, [
       tiles([
-        tile('Latitude', fmtLat(i.lat)),
-        tile('Longitude', fmtLng(i.lng)),
-        tile('Altitude', `${fmtInt(i.altKm)} km`),
-        tile('Velocidade', `${fmtInt(i.speedKmh)} km/h`),
+        tile(C.latitude, fmtLat(i.lat)),
+        tile(C.longitude, fmtLng(i.lng)),
+        tile(C.altitude, `${fmtInt(i.altKm)} km`),
+        tile(C.speed, `${fmtInt(i.speedKmh)} km/h`),
       ]),
     ], [
-      button(state.followIss ? 'A seguir' : 'Seguir', true, () => {
+      button(state.followIss ? C.following : C.follow, true, () => {
         setFollow(!state.followIss);
         if (state.followIss) focusIss();
       }),

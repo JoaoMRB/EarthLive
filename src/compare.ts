@@ -1,7 +1,8 @@
 import { Map as MLMap } from 'maplibre-gl';
 import { config } from './config';
 import type { RasterSpec } from './imagery';
-import { PALETTES, type Theme, type View } from './map';
+import { getLang, type Lang } from './i18n';
+import { PALETTES, localizeLabels, type Theme, type View } from './map';
 
 /**
  * Split-screen comparison: a second map drawn on top of the main one and
@@ -79,6 +80,10 @@ export class CompareView {
     if (this.map.isStyleLoaded()) this.mount();
   }
 
+  setLanguage(lang: Lang): void {
+    if (this.map.isStyleLoaded()) localizeLabels(this.map, lang);
+  }
+
   setSynced(on: boolean): void {
     this.synced = on;
     if (on) this.follow(this.main, this.map);
@@ -119,6 +124,7 @@ export class CompareView {
     const p = PALETTES[this.theme];
     this.map.setProjection({ type: this.view === 'globe' ? 'globe' : 'mercator' });
     this.map.setSky({ 'sky-color': p.space, 'horizon-color': p.horizon, 'fog-color': p.space, 'atmosphere-blend': 0.8 });
+    localizeLabels(this.map, getLang());
     this.mount();
   }
 

@@ -12,6 +12,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { config } from './config';
 import type { RasterSpec } from './imagery';
 import { MERC_LAT } from './weather';
+import { getLang, type Lang } from './i18n';
 
 export type Theme = 'light' | 'dark';
 export type View = 'globe' | 'map';
@@ -87,6 +88,7 @@ export class EarthMap {
   private ready = false;
   private pickHandler: ((p: Pick | null) => void) | null = null;
   private styleListeners: (() => void)[] = [];
+  private lang: Lang = getLang();
 
   constructor(container: HTMLElement, theme: Theme, view: View) {
     this.theme = theme;
@@ -134,6 +136,11 @@ export class EarthMap {
     this.ready = false;
     // diff:false → always a full reload, so 'style.load' fires and our layers are re-added.
     this.map.setStyle(config.styles[theme], { diff: false });
+  }
+
+  setLanguage(lang: Lang): void {
+    this.lang = lang;
+    if (this.ready) localizeLabels(this.map, lang);
   }
 
   setView(view: View): void {
@@ -199,6 +206,7 @@ export class EarthMap {
     for (const id of OVERLAYS) this.mountOverlay(id);
     for (const k of Object.keys(this.visible) as DataLayer[]) this.setVisible(k, this.visible[k]);
     this.applyProjection();
+    localizeLabels(this.map, this.lang);
     for (const fn of this.styleListeners) fn();
   }
 
@@ -493,6 +501,21 @@ export class EarthMap {
               ? 'flights'
               : 'fires';
     this.pickHandler?.({ kind, feature: f });
+  }
+}
+
+/**
+ * Basemap labels in the chosen language (OpenMapTiles name:xx fields), falling
+ * back to the Latin-script name and then the local name.
+ */
+export function localizeLabels(map: MLMap, lang: Lang): void {
+  for (const layer of map.getStyle().layers) {
+    if (layer.type !== 'symbol') continue;
+    const tf = map.getLayoutProperty(layer.id, 'text-field');
+    if (!tf || !JSON.stringify(tf).includes('name')) continue;
+    map.setLayoutProperty(layer.id, 'text-field', [
+      'coalesce', ['get', `name:${lang}`], ['get', 'name:latin'], ['get', 'name'],
+    ]);
   }
 }
 
