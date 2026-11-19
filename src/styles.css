@@ -252,9 +252,100 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 
   .detail { top: auto; left: 8px; right: 8px; bottom: calc(var(--sheet-h) + 16px); width: auto; padding: 16px; }
   .search { top: 128px; left: 8px; right: 8px; width: auto; }
-  .bottombar { display: none; }
+  .bottombar { bottom: calc(var(--sheet-h) + 16px); left: 8px; right: 8px; justify-content: center; }
+  .bottombar .credits-desk, .bottombar .zoom { display: none; }
+  .center-stack { width: 100%; }
+  .timebar { flex-wrap: wrap; justify-content: center; }
+  .has-timebar .detail { bottom: calc(var(--sheet-h) + 84px); }
+
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tab { flex: 1 0 auto; }
+  .tab-label { font-size: 12px; }
+  .group-extra { border-top: 0; padding-top: 0; margin-top: 0; }
+  .group-extra .hint { display: none; }
+  .sources { top: auto; bottom: calc(var(--sheet-h) + 16px); left: 8px; right: 8px; width: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ---------- Theme tabs ---------- */
+.tabs { display: flex; gap: 2px; padding: 3px; border-radius: var(--r-md); background: var(--tile); margin-bottom: 6px; }
+.tab {
+  position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  min-height: 52px; padding: 7px 4px 6px; border: 0; border-radius: var(--r-sm); background: transparent;
+  color: var(--muted); font-size: 11px; font-weight: 500; transition: background .2s var(--ease), color .2s var(--ease);
+}
+.tab svg { width: 17px; height: 17px; }
+.tab:hover { color: var(--text); }
+.tab[aria-selected="true"] { background: var(--active); color: var(--text); box-shadow: var(--active-shadow); }
+.tab-badge {
+  position: absolute; top: 4px; right: 6px; min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px;
+  font-size: 10px; line-height: 15px; font-weight: 600; text-align: center; background: var(--on); color: #fff;
+}
+.tab-badge:empty { display: none; }
+
+.group-extra { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 2px 0; border-top: 1px solid var(--line); margin-top: 6px; }
+.group-extra .hint { line-height: 1.35; }
+.link-btn { border: 0; background: none; padding: 0; color: var(--muted); text-decoration: none; }
+.link-btn:hover { color: var(--text); text-decoration: underline; }
+
+/* ---------- Bottom: legend + time bar ---------- */
+.center-stack { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0; }
+.timebar, .legend { border-radius: var(--r-lg); }
+.timebar { display: flex; align-items: center; gap: 8px; padding: 6px 8px; max-width: calc(100vw - 32px); }
+.tb-title { font-weight: 600; padding: 0 6px; white-space: nowrap; }
+.tb-sep { width: 1px; height: 24px; background: var(--line); }
+.date-ctl { display: flex; align-items: center; gap: 2px; }
+.side-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 0 4px; }
+.date-btn { min-height: 36px; padding: 0 10px; border: 0; border-radius: var(--r-sm); background: var(--tile); font-weight: 500; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.date-btn:hover { background: var(--active); }
+.icon-mini { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; }
+.icon-mini:hover { background: var(--hover); }
+.icon-mini svg { width: 16px; height: 16px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: transparent; font-weight: 500; white-space: nowrap;
+}
+.chip svg { width: 15px; height: 15px; }
+.chip:hover { background: var(--hover); }
+.chip[aria-pressed="true"] { background: var(--active); box-shadow: var(--active-shadow); }
+
+.legend { display: grid; grid-template-columns: auto; gap: 4px; padding: 8px 14px 6px; width: 300px; max-width: 100%; }
+.legend-title { font-size: 12px; font-weight: 600; }
+.legend-bar { height: 8px; border-radius: 999px; }
+.legend-ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- Sources dialog ---------- */
+.sources { bottom: 84px; left: var(--gap); width: 360px; display: flex; flex-direction: column; gap: 12px; z-index: 7; animation: rise .2s var(--ease); }
+.source-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.source-list li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
+.source-list li:last-child { border-bottom: 0; }
+.source-list span { color: var(--muted); }
+.source-list a { text-decoration: none; font-weight: 500; text-align: right; }
+.source-list a:hover { text-decoration: underline; }
+
+/* ---------- Place comparison ---------- */
+.cmp-table { display: flex; flex-direction: column; border-radius: var(--r-md); background: var(--tile); padding: 4px 10px; max-height: 46vh; overflow: auto; }
+.cmp-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+.cmp-row:last-child { border-bottom: 0; }
+.cmp-head { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.cmp-hint { margin: 0; flex: 1; text-align: center; padding: 10px 0; }
+.detail p { margin: 0; }
+.detail { max-height: calc(100dvh - 180px); overflow: auto; }
+
+/* ---------- Wind particles & compare ---------- */
+.wind-canvas { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.compare { position: fixed; inset: 0; z-index: 1; }
+.compare-map { position: absolute; inset: 0; background: var(--space-grad); }
+.compare-divider {
+  position: fixed; top: 0; bottom: 0; z-index: 2; width: 2px; margin-left: -1px;
+  background: var(--text); opacity: .85; cursor: ew-resize; touch-action: none;
+}
+.compare-divider::before { content: ""; position: absolute; inset: 0 -14px; }
+.compare-knob {
+  position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; margin: -20px 0 0 -20px; border-radius: 50%;
+  border: 1px solid var(--line); background: var(--glass-strong); box-shadow: var(--shadow); display: grid; place-items: center; cursor: ew-resize;
+}
+.compare-knob svg { width: 18px; height: 18px; }

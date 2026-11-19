@@ -7,6 +7,14 @@ export const fmtInt = (n: number): string => intFmt.format(Math.round(n));
 export const fmtNum = (n: number, digits: number): string =>
   new Intl.NumberFormat(LOCALE, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n);
 
+const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/** 'YYYY-MM-DD' → '18 nov 2026' */
+export function fmtIsoDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
+}
+
 /** "há 5 min", "há 2 h", "ontem"… */
 export function relTime(ms: number): string {
   const diff = (ms - Date.now()) / 1000;

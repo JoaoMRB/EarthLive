@@ -44,7 +44,7 @@
     </nav>
 
     <div class="actions">
-      <button type="button" class="glass icon-btn" id="search-btn" aria-label="Pesquisar voo" aria-expanded="false" aria-controls="search">
+      <button type="button" class="glass icon-btn" id="search-btn" aria-label="Pesquisar" aria-expanded="false" aria-controls="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
       </button>
       <button type="button" class="glass icon-btn" id="theme-btn" aria-label="Mudar tema">
@@ -58,8 +58,8 @@
   <div class="glass search" id="search" hidden>
     <label class="search-field">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
-      <span class="sr-only">Indicativo do voo</span>
-      <input id="search-input" type="search" placeholder="Indicativo do voo, ex. TAP1234, ou ISS" autocomplete="off" spellcheck="false" />
+      <span class="sr-only">Pesquisar voo, lugar ou ISS</span>
+      <input id="search-input" type="search" placeholder="Voo (ex. TAP1234), lugar ou ISS" autocomplete="off" spellcheck="false" />
     </label>
     <ul class="search-results" id="search-results" role="listbox" aria-label="Resultados"></ul>
   </div>
@@ -67,44 +67,51 @@
   <!-- Layers -->
   <section class="glass panel layers" aria-label="Camadas">
     <div class="sheet-handle" aria-hidden="true"></div>
-    <div class="panel-head">
-      <h2>Camadas</h2>
-      <span class="muted small">tempo real</span>
-    </div>
-    <div class="layer-list" id="layer-list"></div>
-
-    <div class="source-switch" id="source-switch" hidden>
-      <span class="muted small">Voos</span>
-      <div class="segmented mini" role="group" aria-label="Fonte dos voos">
-        <button type="button" data-source="snapshot" aria-pressed="true">A cada 15 min</button>
-        <button type="button" data-source="live" aria-pressed="false">Tempo real</button>
-      </div>
-    </div>
-
+    <div class="tabs" id="group-tabs" role="tablist" aria-label="Temas"></div>
+    <div class="layer-list" id="layer-list" role="tabpanel"></div>
+    <div class="group-extra" id="group-extra"></div>
     <footer class="credits credits-sheet">
-      <a class="gh" href="https://github.com/JoaoMRB/EarthLive" target="_blank" rel="noopener" aria-label="Código no GitHub">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
-      </a>
-      <span class="muted small">USGS · NASA FIRMS · OpenSky · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OSM</a></span>
+      <a class="gh" href="https://github.com/JoaoMRB/EarthLive" target="_blank" rel="noopener" aria-label="Código no GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg></a>
+      <button type="button" class="link-btn small" data-sources>Fontes dos dados</button>
+      <span class="muted small">· <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></span>
     </footer>
   </section>
 
   <!-- Detail -->
   <aside class="glass panel detail" id="detail" aria-label="Detalhe" aria-live="polite" hidden></aside>
 
+  <!-- Data sources -->
+  <div class="glass panel sources" id="sources" role="dialog" aria-label="Fontes dos dados" hidden>
+    <div class="detail-head">
+      <div class="detail-titles"><span class="kicker">Créditos</span><span class="detail-title">Fontes dos dados</span></div>
+      <button type="button" class="close" aria-label="Fechar" data-sources-close><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg></button>
+    </div>
+    <ul class="source-list">
+      <li><span>Voos</span><a href="https://opensky-network.org" target="_blank" rel="noopener">OpenSky Network</a></li>
+      <li><span>Sismos</span><a href="https://earthquake.usgs.gov" target="_blank" rel="noopener">USGS</a></li>
+      <li><span>Incêndios</span><a href="https://firms.modaps.eosdis.nasa.gov" target="_blank" rel="noopener">NASA FIRMS</a></li>
+      <li><span>Vulcões e tempestades</span><a href="https://eonet.gsfc.nasa.gov" target="_blank" rel="noopener">NASA EONET</a></li>
+      <li><span>ISS</span><a href="https://wheretheiss.at" target="_blank" rel="noopener">wheretheiss.at</a></li>
+      <li><span>Vento e temperatura</span><a href="https://www.nco.ncep.noaa.gov/pmb/products/gfs/" target="_blank" rel="noopener">NOAA GFS</a></li>
+      <li><span>Nuvens</span><a href="https://view.eumetsat.int" target="_blank" rel="noopener">© EUMETSAT</a></li>
+      <li><span>Radar de chuva</span><a href="https://www.rainviewer.com" target="_blank" rel="noopener">RainViewer</a></li>
+      <li><span>Satélite, luzes, poluição</span><a href="https://earthdata.nasa.gov/gibs" target="_blank" rel="noopener">NASA GIBS / Worldview</a></li>
+      <li><span>Tempo e ar num local</span><a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a></li>
+      <li><span>Mapa base</span><a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap · © OpenStreetMap</a></li>
+    </ul>
+  </div>
+
   <!-- Bottom bar -->
   <div class="bottombar">
     <footer class="credits credits-desk">
-      <a class="gh" href="https://github.com/JoaoMRB/EarthLive" target="_blank" rel="noopener" aria-label="Código no GitHub">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg>
-      </a>
-      <span class="muted small">USGS · NASA FIRMS · OpenSky · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></span>
+      <a class="gh" href="https://github.com/JoaoMRB/EarthLive" target="_blank" rel="noopener" aria-label="Código no GitHub"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z" /></svg></a>
+      <button type="button" class="link-btn small" data-sources>Fontes dos dados</button>
+      <span class="muted small">· <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a></span>
     </footer>
 
-    <div class="glass segmented period" role="group" aria-label="Período dos sismos" title="Período dos sismos">
-      <button type="button" data-period="hour" aria-pressed="false">1 h</button>
-      <button type="button" data-period="day" aria-pressed="true">24 h</button>
-      <button type="button" data-period="week" aria-pressed="false">7 d</button>
+    <div class="center-stack">
+      <div class="glass legend" id="legend" hidden></div>
+      <div class="glass timebar" id="timebar" hidden></div>
     </div>
 
     <div class="glass zoom">
@@ -117,6 +124,8 @@
       </button>
     </div>
   </div>
+
+  <input type="date" id="date-input" class="sr-only" tabindex="-1" aria-hidden="true" />
 
   <script type="module" src="/src/main.ts"></script>
 </body>
