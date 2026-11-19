@@ -1,0 +1,15 @@
+name = "earthlive-flights"
+main = "src/index.mjs"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Sites allowed to call this Worker (comma-separated, no trailing slash).
+ALLOWED_ORIGINS = "https://joaomrb.github.io,http://localhost:5173"
+# Reuse one OpenSky response for this many seconds.
+# Anonymous OpenSky allows ~100 global requests/day, so without credentials use
+# 900 or more; with a free OpenSky account (4000/day), 60 is fine.
+CACHE_SECONDS = "60"
+
+# Secrets — set them with the CLI, never in this file:
+#   npx wrangler secret put OPENSKY_CLIENT_ID --config worker/wrangler.toml
+#   npx wrangler secret put OPENSKY_CLIENT_SECRET --config worker/wrangler.toml
