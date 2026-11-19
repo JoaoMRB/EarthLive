@@ -1,25 +1,30 @@
-const LOCALE = 'pt-PT';
-const intFmt = new Intl.NumberFormat(LOCALE, { maximumFractionDigits: 0 });
-const rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: 'auto', style: 'short' });
+import { t } from './i18n';
 
-export const fmtInt = (n: number): string => intFmt.format(Math.round(n));
-
-export const fmtNum = (n: number, digits: number): string =>
-  new Intl.NumberFormat(LOCALE, { minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n);
-
-const MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-
-/** 'YYYY-MM-DD' → '18 nov 2026' */
-export function fmtIsoDay(day: string): string {
-  const [y, m, d] = day.split('-').map(Number);
-  return `${d} ${MONTHS[m - 1]} ${y}`;
+// Formatters follow the current language and are rebuilt when it changes.
+const fmts = new Map<string, Intl.NumberFormat>();
+function numFmt(digits: number): Intl.NumberFormat {
+  const key = `${t().locale}:${digits}`;
+  let f = fmts.get(key);
+  if (!f) fmts.set(key, (f = new Intl.NumberFormat(t().locale, { minimumFractionDigits: digits, maximumFractionDigits: digits })));
+  return f;
 }
 
-/** "há 5 min", "há 2 h", "ontem"… */
+export const fmtInt = (n: number): string => numFmt(0).format(Math.round(n));
+
+export const fmtNum = (n: number, digits: number): string => numFmt(digits).format(n);
+
+/** 'YYYY-MM-DD' → '18 nov 2026' / '18 Nov 2026' */
+export function fmtIsoDay(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return `${d} ${t().months[m - 1]} ${y}`;
+}
+
+/** "há 5 min" / "5 min ago", "ontem" / "yesterday"… */
 export function relTime(ms: number): string {
   const diff = (ms - Date.now()) / 1000;
   const abs = Math.abs(diff);
-  if (abs < 45) return 'agora';
+  if (abs < 45) return t().now;
+  const rtf = new Intl.RelativeTimeFormat(t().locale, { numeric: 'auto', style: 'short' });
   if (abs < 3600) return rtf.format(Math.round(diff / 60), 'minute');
   if (abs < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
   return rtf.format(Math.round(diff / 86400), 'day');

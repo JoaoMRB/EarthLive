@@ -1,4 +1,5 @@
 /** Current weather and air quality for any point, from Open-Meteo (no key, CORS enabled). */
+import { t } from './i18n';
 
 export interface PlaceInfo {
   lat: number;
@@ -54,29 +55,25 @@ export async function loadPlace(lat: number, lng: number, signal?: AbortSignal):
   };
 }
 
-/** WMO weather code → short Portuguese description. */
+/** WMO weather code → short description in the current language. */
 export function weatherText(code: number): string {
-  if (code === 0) return 'Céu limpo';
-  if (code <= 2) return 'Pouco nublado';
-  if (code === 3) return 'Nublado';
-  if (code <= 48) return 'Nevoeiro';
-  if (code <= 57) return 'Chuvisco';
-  if (code <= 67) return 'Chuva';
-  if (code <= 77) return 'Neve';
-  if (code <= 82) return 'Aguaceiros';
-  if (code <= 86) return 'Aguaceiros de neve';
-  return 'Trovoada';
+  const w = t().weather;
+  if (code === 0) return w.clear;
+  if (code <= 2) return w.partly;
+  if (code === 3) return w.overcast;
+  if (code <= 48) return w.fog;
+  if (code <= 57) return w.drizzle;
+  if (code <= 67) return w.rain;
+  if (code <= 77) return w.snow;
+  if (code <= 82) return w.showers;
+  if (code <= 86) return w.snowShowers;
+  return w.storm;
 }
 
 /** European AQI bands. */
 export function aqiText(aqi: number): string {
-  if (aqi <= 20) return 'Boa';
-  if (aqi <= 40) return 'Razoável';
-  if (aqi <= 60) return 'Moderada';
-  if (aqi <= 80) return 'Fraca';
-  if (aqi <= 100) return 'Muito fraca';
-  return 'Extremamente fraca';
+  const band = aqi <= 20 ? 0 : aqi <= 40 ? 1 : aqi <= 60 ? 2 : aqi <= 80 ? 3 : aqi <= 100 ? 4 : 5;
+  return t().aqi[band];
 }
 
-const DIRS = ['N', 'NE', 'E', 'SE', 'S', 'SO', 'O', 'NO'];
-export const compass = (deg: number): string => DIRS[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
+export const compass = (deg: number): string => t().compass[Math.round((((deg % 360) + 360) % 360) / 45) % 8];
