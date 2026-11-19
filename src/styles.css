@@ -255,7 +255,14 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
   .credits-sheet { display: flex; justify-content: center; text-align: center; }
   .credits-sheet .small { font-size: 11px; }
 
-  .detail { top: auto; left: 8px; right: 8px; bottom: calc(var(--sheet-h) + 16px); width: auto; padding: 16px; }
+  .detail {
+    top: auto; left: 8px; right: 8px; bottom: calc(var(--sheet-h) + 16px); width: auto; padding: 14px; gap: 12px;
+    /* Never slide under the top bar: scroll inside the card instead. */
+    max-height: calc(100dvh - var(--sheet-h) - 150px);
+  }
+  .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .tile { padding: 9px 10px; }
+  .detail-title { font-size: 18px; }
   .search { top: 128px; left: 8px; right: 8px; width: auto; }
   .bottombar { bottom: calc(var(--sheet-h) + 16px); left: 8px; right: 8px; justify-content: center; }
   .bottombar .credits-desk, .bottombar .zoom { display: none; }
