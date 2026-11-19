@@ -31,6 +31,18 @@ Plus:
 
 > Night lights are captured once per night (~01:30 local) at ~500 m resolution: they show cities and neighbourhoods switching on and off, not individual houses or real-time changes.
 
+## Install as an app
+
+EarthLive is a Progressive Web App: once installed it opens in its own window, without the browser's address bar, starts faster and still shows the last data when you are offline.
+
+| Browser | How |
+|---|---|
+| Chrome, Edge, Brave, Opera, Samsung Internet (desktop & Android) | **Install app** link at the bottom of the page, or the install icon in the address bar |
+| Safari on iPhone / iPad | Share → **Add to Home Screen** |
+| Safari on Mac (17+) | File → **Add to Dock** |
+| Firefox on Android | Menu → **Install** |
+| Firefox on desktop | Limited or no app install (depends on version) — works as a normal website |
+
 ## How it works
 
 The site is fully static and hosted on **GitHub Pages**.
