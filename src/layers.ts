@@ -6,7 +6,7 @@ export type LayerId =
   | 'flights' | 'iss'
   | 'quakes' | 'fires' | 'volcanoes' | 'storms'
   | 'wind' | 'temp' | 'radar' | 'clouds' | 'satellite' | 'aerosol'
-  | 'lights' | 'daynight';
+  | 'lights' | 'aurora' | 'daynight';
 
 export interface LayerDef {
   id: LayerId;
@@ -42,13 +42,14 @@ export const LAYERS: LayerDef[] = [
   { id: 'satellite', group: 'climate', field: true, dated: true },
   { id: 'aerosol', group: 'climate', field: true, dated: true },
   { id: 'lights', group: 'night', field: true, dated: true },
+  { id: 'aurora', group: 'night' },
   { id: 'daynight', group: 'night' },
 ];
 
 export const DEFAULT_ON: Record<LayerId, boolean> = {
   flights: true, iss: true, quakes: true, fires: true, volcanoes: true, storms: true,
   wind: false, temp: false, radar: false, clouds: false, satellite: false, aerosol: false,
-  lights: false, daynight: true,
+  lights: false, aurora: false, daynight: true,
 };
 
 export const layerDef = (id: LayerId): LayerDef => LAYERS.find((l) => l.id === id)!;

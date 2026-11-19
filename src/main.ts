@@ -6,6 +6,7 @@ import {
   extrapolate, issAt, issTrack, loadFires, loadFlights, loadIssOrbit, loadQuakes,
   type Fire, type Flight, type FlightSource, type IssState, type Quake, type QuakePeriod,
 } from './data';
+import { AURORA_SCALE, auroraAt, loadAurora, renderAurora, type Aurora } from './aurora';
 import { renderNight, sunAltitude } from './daynight';
 import { loadEvents, type NaturalEvent } from './events';
 import {
@@ -61,6 +62,8 @@ const state = {
   weather: null as WeatherGrid | null,
   fieldImages: {} as Partial<Record<'temp' | 'wind', string>>,
   radar: null as { spec: RasterSpec; time: number } | null,
+  aurora: null as Aurora | null,
+  auroraImage: null as string | null,
   sat: null as SatRec | null,
   iss: null as IssState | null,
   selected: null as Selection,
@@ -261,6 +264,18 @@ poll(
   () => state.layers.radar,
 );
 
+poll(
+  'aurora',
+  () => 10 * 60_000,
+  async () => {
+    state.aurora = await loadAurora();
+    state.auroraImage = null;
+    await applyOverlays();
+    refreshDetail();
+  },
+  () => state.layers.aurora,
+);
+
 // Day/night shading follows the Sun: redraw every minute.
 async function renderDayNight(): Promise<void> {
   if (!state.layers.daynight || document.hidden) return;
@@ -326,6 +341,14 @@ async function applyOverlays(): Promise<void> {
   if (L.daynight) await renderDayNight();
   else earth.setImage('daynight', null);
 
+  if (L.aurora && state.aurora) {
+    const url = state.auroraImage ?? (state.auroraImage = await renderAurora(state.aurora));
+    if (token !== overlayToken) return;
+    earth.setImage('aurora', url, 0.85);
+  } else {
+    earth.setImage('aurora', null);
+  }
+
   syncCompare();
   renderTimebar();
   renderLegend();
@@ -371,6 +394,7 @@ const LAYER_COLOR: Record<LayerId, (t: Theme) => string> = {
   satellite: () => '#5C9E6B',
   aerosol: () => '#C9A227',
   lights: () => '#F5D76E',
+  aurora: () => '#3BE37F',
   daynight: (t) => (t === 'dark' ? '#6F7FA8' : '#3E4B70'),
 };
 
@@ -417,6 +441,7 @@ function toggleLayer(id: LayerId): void {
   void applyOverlays();
   if (on && (id === 'wind' || id === 'temp') && !state.weather) kick('weather');
   if (on && id === 'radar' && !state.radar) kick('radar');
+  if (on && id === 'aurora' && !state.aurora) kick('aurora');
 }
 
 function kick(name: string): void {
@@ -463,6 +488,12 @@ function layerSub(id: LayerId): string {
         : T.lights;
     case 'daynight':
       return T.daynight;
+    case 'aurora': {
+      const a = state.aurora;
+      if (!a) return state.layers.aurora ? loading : T.aurora;
+      const f = (k: number | null) => (k == null ? '—' : fmtNum(k, 1));
+      return T.auroraOn(f(a.kpNow), f(a.kpMax24h));
+    }
   }
 }
 
@@ -668,6 +699,11 @@ function renderLegend(): void {
     title = t().legend.aerosol;
     bg = 'linear-gradient(90deg, #FFFFB2, #FECC5C, #FD8D3C, #F03B20, #BD0026)';
     ticks = [t().legend.clean, '', '', '', t().legend.dense];
+  }
+  if (!title && state.layers.aurora && state.aurora) {
+    title = t().legend.aurora;
+    bg = gradient(AURORA_SCALE);
+    ticks = ['5', '25', '50', '75', '100'];
   }
   legend.hidden = !title;
   if (!title) return;
@@ -995,6 +1031,7 @@ function placeRows(p: PlaceInfo): [string, string][] {
     [r.air, p.aqi != null ? `${aqiText(p.aqi)} (${fmtInt(p.aqi)})` : '—'],
     [r.pm25, p.pm25 != null ? `${fmtNum(p.pm25, 1)} µg/m³` : '—'],
     [r.sun, sun >= 0 ? C.sunAbove(fmtInt(sun)) : C.sunBelow(fmtInt(-sun))],
+    ...(state.aurora ? [[r.aurora, `${fmtInt(auroraAt(state.aurora, p.lat, p.lng))} %`] as [string, string]] : []),
   ];
 }
 
@@ -1186,6 +1223,15 @@ kickers.weather = () => void loadWeather()
     renderLayers();
   })
   .catch(() => state.errors.add('weather'));
+kickers.aurora = () => void loadAurora()
+  .then(async (a) => {
+    state.aurora = a;
+    state.auroraImage = null;
+    await applyOverlays();
+    renderLayers();
+    refreshDetail();
+  })
+  .catch(() => state.errors.add('aurora'));
 kickers.radar = () => void radarRaster()
   .then(async (r) => {
     state.radar = r;

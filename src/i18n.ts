@@ -48,6 +48,7 @@ const pt = {
     srcImagery: 'Satélite, luzes, poluição',
     srcPoint: 'Tempo e ar num local',
     srcBasemap: 'Mapa base',
+    srcAurora: 'Auroras',
     install: 'Instalar app',
   },
 
@@ -59,7 +60,7 @@ const pt = {
   layers: {
     flights: 'Voos', iss: 'ISS', quakes: 'Sismos', fires: 'Incêndios', volcanoes: 'Vulcões', storms: 'Tempestades',
     wind: 'Vento', temp: 'Temperatura', radar: 'Chuva (radar)', clouds: 'Nuvens', satellite: 'Satélite',
-    aerosol: 'Poluição e fumo', lights: 'Luzes noturnas', daynight: 'Dia e noite',
+    aerosol: 'Poluição e fumo', lights: 'Luzes noturnas', aurora: 'Auroras', daynight: 'Dia e noite',
   } as Record<LayerId, string>,
 
   live: {
@@ -91,6 +92,8 @@ const pt = {
     lightsNight: (d: string) => `Noite de ${d}`,
     lights: 'Cidades vistas de noite (NASA)',
     daynight: 'Sol e crepúsculo agora',
+    aurora: 'Previsão NOAA para a próxima hora',
+    auroraOn: (kp: string, max: string) => `Kp ${kp} agora · máx. ${max} nas próximas 24 h`,
   },
 
   extra: {
@@ -124,6 +127,7 @@ const pt = {
     aerosol: 'Aerossóis (fumo, poeira, poluição)',
     clean: 'Limpo',
     dense: 'Denso',
+    aurora: 'Probabilidade de aurora · %',
   },
 
   search: {
@@ -151,7 +155,7 @@ const pt = {
     night: 'noite',
     rows: {
       localTime: 'Hora local', weather: 'Tempo', temp: 'Temperatura', feels: 'Sensação', wind: 'Vento',
-      humidity: 'Humidade', clouds: 'Nuvens', precip: 'Precipitação', air: 'Qualidade do ar', pm25: 'PM2.5', sun: 'Sol',
+      humidity: 'Humidade', clouds: 'Nuvens', precip: 'Precipitação', air: 'Qualidade do ar', pm25: 'PM2.5', sun: 'Sol', aurora: 'Aurora',
     },
     sunAbove: (d: string) => `${d}° acima`,
     sunBelow: (d: string) => `${d}° abaixo`,
@@ -246,6 +250,7 @@ const en: Dict = {
     srcImagery: 'Satellite, lights, pollution',
     srcPoint: 'Weather and air at a point',
     srcBasemap: 'Base map',
+    srcAurora: 'Auroras',
     install: 'Install app',
   },
 
@@ -257,7 +262,7 @@ const en: Dict = {
   layers: {
     flights: 'Flights', iss: 'ISS', quakes: 'Earthquakes', fires: 'Wildfires', volcanoes: 'Volcanoes', storms: 'Storms',
     wind: 'Wind', temp: 'Temperature', radar: 'Rain (radar)', clouds: 'Clouds', satellite: 'Satellite',
-    aerosol: 'Smoke & pollution', lights: 'Night lights', daynight: 'Day & night',
+    aerosol: 'Smoke & pollution', lights: 'Night lights', aurora: 'Auroras', daynight: 'Day & night',
   },
 
   live: {
@@ -289,6 +294,8 @@ const en: Dict = {
     lightsNight: (d) => `Night of ${d}`,
     lights: 'Cities seen at night (NASA)',
     daynight: 'Sun and twilight now',
+    aurora: 'NOAA forecast for the next hour',
+    auroraOn: (kp, max) => `Kp ${kp} now · max ${max} in the next 24 h`,
   },
 
   extra: {
@@ -322,6 +329,7 @@ const en: Dict = {
     aerosol: 'Aerosols (smoke, dust, pollution)',
     clean: 'Clean',
     dense: 'Dense',
+    aurora: 'Aurora probability · %',
   },
 
   search: {
@@ -349,7 +357,7 @@ const en: Dict = {
     night: 'night',
     rows: {
       localTime: 'Local time', weather: 'Weather', temp: 'Temperature', feels: 'Feels like', wind: 'Wind',
-      humidity: 'Humidity', clouds: 'Clouds', precip: 'Precipitation', air: 'Air quality', pm25: 'PM2.5', sun: 'Sun',
+      humidity: 'Humidity', clouds: 'Clouds', precip: 'Precipitation', air: 'Air quality', pm25: 'PM2.5', sun: 'Sun', aurora: 'Aurora',
     },
     sunAbove: (d) => `${d}° above`,
     sunBelow: (d) => `${d}° below`,

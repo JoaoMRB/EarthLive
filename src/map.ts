@@ -18,7 +18,7 @@ export type Theme = 'light' | 'dark';
 export type View = 'globe' | 'map';
 export type DataLayer = 'flights' | 'quakes' | 'fires' | 'iss' | 'volcanoes' | 'storms';
 /** Image overlays, drawn under the basemap labels, bottom → top. */
-export const OVERLAYS = ['lights', 'satellite', 'aerosol', 'temp', 'wind', 'clouds', 'radar', 'daynight'] as const;
+export const OVERLAYS = ['lights', 'satellite', 'aerosol', 'temp', 'wind', 'clouds', 'radar', 'daynight', 'aurora'] as const;
 export type OverlayId = (typeof OVERLAYS)[number];
 export type FC = GeoJSON.FeatureCollection;
 
