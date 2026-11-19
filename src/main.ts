@@ -17,6 +17,7 @@ import { EarthMap, PALETTES, type DataLayer, type FC, type Pick, type Theme, typ
 import { aqiText, compass, loadPlace, weatherText, type PlaceInfo } from './place';
 import { el, fmtInt, fmtIsoDay, fmtNum, relTime, store } from './util';
 import { applyStatic, getLang, onLangChange, setLang, t } from './i18n';
+import { initPwa, setThemeColor } from './pwa';
 import { TEMP_SCALE, WIND_SCALE, loadWeather, renderField, type WeatherGrid } from './weather';
 import { WindParticles } from './wind';
 
@@ -701,11 +702,13 @@ document.getElementById('theme-btn')!.addEventListener('click', () => {
   earth.setTheme(state.theme);
   compare?.setTheme(state.theme);
   wind.setTheme(state.theme === 'dark');
+  setThemeColor(state.theme === 'dark');
   renderLayers();
 });
 // ---------- Language ----------
 
 applyStatic();
+initPwa();
 const langBtn = document.getElementById('lang-btn')!;
 function syncLangBtn(): void {
   langBtn.textContent = getLang() === 'pt' ? 'EN' : 'PT';

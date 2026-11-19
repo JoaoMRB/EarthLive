@@ -363,3 +363,15 @@ svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width:
 .compare-knob svg { width: 18px; height: 18px; }
 
 .lang-btn { font-size: 12px; font-weight: 600; letter-spacing: .04em; }
+
+/* ---------- PWA ---------- */
+.install-btn::before { content: "·"; margin-right: 8px; color: var(--muted); }
+.toast {
+  position: fixed; z-index: 8; left: 50%; top: max(84px, calc(env(safe-area-inset-top) + 130px)); transform: translateX(-50%);
+  width: min(420px, calc(100vw - 24px)); padding: 12px 16px; border-radius: var(--r-md); font-size: 13px; text-align: center;
+  animation: rise .2s var(--ease);
+}
+/* Installed app: respect notches / rounded corners on the sides too. */
+@media (display-mode: standalone) {
+  .topbar { left: max(var(--gap), env(safe-area-inset-left)); right: max(var(--gap), env(safe-area-inset-right)); }
+}

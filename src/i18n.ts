@@ -48,6 +48,11 @@ const pt = {
     srcImagery: 'Satélite, luzes, poluição',
     srcPoint: 'Tempo e ar num local',
     srcBasemap: 'Mapa base',
+    install: 'Instalar app',
+  },
+
+  pwa: {
+    iosHint: 'Para instalar: toca em Partilhar (□↑) e depois em “Adicionar ao ecrã principal”.',
   },
 
   groups: { move: 'Movimento', nature: 'Natureza', climate: 'Clima', night: 'Noite' } as Record<Group, string>,
@@ -241,6 +246,11 @@ const en: Dict = {
     srcImagery: 'Satellite, lights, pollution',
     srcPoint: 'Weather and air at a point',
     srcBasemap: 'Base map',
+    install: 'Install app',
+  },
+
+  pwa: {
+    iosHint: 'To install: tap Share (□↑) and then “Add to Home Screen”.',
   },
 
   groups: { move: 'Movement', nature: 'Nature', climate: 'Weather', night: 'Night' },
