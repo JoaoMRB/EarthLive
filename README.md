@@ -20,6 +20,7 @@ Plus:
 
 - **Compare dates side by side** with a draggable divider (e.g. a blackout, a holiday night, smoke before/after) — same place or two different places.
 - **Tap anywhere** for the local weather, air quality, local time and Sun height — and **compare two places**.
+- **Portuguese and English** (PT/EN button; follows the browser language by default), including the map labels.
 - Search flights, places and the ISS. Globe ⇄ Map, light and dark themes, works on phones, no tracking, no cookies.
 
 > Night lights are captured once per night (~01:30 local) at ~500 m resolution: they show cities and neighbourhoods switching on and off, not individual houses or real-time changes.
