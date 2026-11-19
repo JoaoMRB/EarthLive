@@ -1,23 +1,28 @@
 {
   "name": "earthlive",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/web",
-    "apps/api"
-  ],
+  "type": "module",
+  "description": "Live Earth data (flights, earthquakes, wildfires, ISS) on a globe or flat map.",
   "scripts": {
-    "web:dev": "npm run start -w web",
-    "web:build": "npm run build -w web",
-    "api:dev": "npm run dev -w api",
-    "api:build": "npm run build -w api",
-    "api:start": "npm run start -w api",
-    "build": "npm run api:build && npm run web:build",
-    "dev": "concurrently -n api,web -c blue,green \"npm run api:dev\" \"npm run web:dev\""
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "data": "node scripts/fetch-data.mjs public/data",
+    "worker:dev": "npx wrangler@4.165.0 dev --config worker/wrangler.toml",
+    "worker:deploy": "npx wrangler@4.165.0 deploy --config worker/wrangler.toml"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.19.0",
+    "satellite.js": "^6.0.2"
   },
   "devDependencies": {
-    "autoprefixer": "^10.5.0",
-    "concurrently": "^9.1.2",
-    "tailwindcss": "^4.3.0"
+    "@types/geojson": "^7946.0.16",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.8"
   }
 }
