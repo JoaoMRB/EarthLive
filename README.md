@@ -1,5 +1,9 @@
 # EarthLive
 
+![EarthLive — the world seen from above, live](docs/social-preview.png)
+
+**[Open EarthLive →](https://joaomrb.github.io/EarthLive/)**
+
 The world seen from above, live: flights, earthquakes, wildfires, volcanoes, storms, wind, temperature, clouds, rain, air pollution, night lights, auroras and the International Space Station — on a 3D globe or a flat map.
 
 | Globe | Map |
