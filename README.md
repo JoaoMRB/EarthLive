@@ -7,14 +7,20 @@ The world seen from above, live: flights, earthquakes, wildfires, volcanoes, sto
 | ![Globe](docs/screenshot-globe.png) | ![Map](docs/screenshot-map.png) |
 | ![Wind](docs/screenshot-wind.png) | ![Night lights compared](docs/screenshot-lights.png) |
 
+### On a phone
+
+| Globe | Wind | Night lights | Weather at a place |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/mobile-globe.png" width="200" alt="Globe view on a phone"> | <img src="docs/mobile-wind.png" width="200" alt="Animated wind on a phone"> | <img src="docs/mobile-lights.png" width="200" alt="Night lights on a phone"> | <img src="docs/mobile-place.png" width="200" alt="Weather and air quality at a place on a phone"> |
+
 ## Features
 
 Layers are grouped in four themes:
 
-- **Movimento** — flights (OpenSky, animated between updates) and the ISS (orbit computed in the browser).
-- **Natureza** — earthquakes (USGS, 1 h / 24 h / 7 d), wildfires (NASA FIRMS), active volcanoes and storms with their track (NASA EONET).
-- **Clima** — animated wind and temperature (NOAA GFS, current forecast hour), clouds (EUMETSAT, whole planet), rain radar (RainViewer), true-colour satellite image of the day and aerosols/pollution (NASA GIBS).
-- **Noite** — night lights (NASA Black Marble 2016 or any night since March 2024) and live day/night with twilight.
+- **Movement** — flights (OpenSky, animated between updates) and the ISS (orbit computed in the browser).
+- **Nature** — earthquakes (USGS, 1 h / 24 h / 7 d), wildfires (NASA FIRMS), active volcanoes and storms with their track (NASA EONET).
+- **Weather** — animated wind and temperature (NOAA GFS, current forecast hour), clouds (EUMETSAT, whole planet), rain radar (RainViewer), true-colour satellite image of the day and aerosols/pollution (NASA GIBS).
+- **Night** — night lights (NASA Black Marble 2016 or any night since March 2024) and live day/night with twilight.
 
 Plus:
 
@@ -81,7 +87,7 @@ npm run dev    # http://localhost:5173
    npx wrangler@4.165.0 secret put OPENSKY_CLIENT_ID --config worker/wrangler.toml
    npx wrangler@4.165.0 secret put OPENSKY_CLIENT_SECRET --config worker/wrangler.toml
    ```
-4. In GitHub, add a repository **variable** (not a secret) `FLIGHTS_LIVE_URL` = `https://earthlive-flights.<your-subdomain>.workers.dev/flights` and re-run the workflow. A *“Tempo real”* option appears in the layers panel.
+4. In GitHub, add a repository **variable** (not a secret) `FLIGHTS_LIVE_URL` = `https://earthlive-flights.<your-subdomain>.workers.dev/flights` and re-run the workflow. A *“Real time” / “Tempo real”* option appears in the layers panel.
 
 Without OpenSky credentials, set `CACHE_SECONDS` in `wrangler.toml` to `900` or more to stay within the anonymous limit.
 
