@@ -1,6 +1,6 @@
 # EarthLive
 
-The world seen from above, live: flights, earthquakes, wildfires, volcanoes, storms, wind, temperature, clouds, rain, air pollution, night lights and the International Space Station — on a 3D globe or a flat map.
+The world seen from above, live: flights, earthquakes, wildfires, volcanoes, storms, wind, temperature, clouds, rain, air pollution, night lights, auroras and the International Space Station — on a 3D globe or a flat map.
 
 | Globe | Map |
 |---|---|
@@ -20,7 +20,7 @@ Layers are grouped in four themes:
 - **Movement** — flights (OpenSky, animated between updates) and the ISS (orbit computed in the browser).
 - **Nature** — earthquakes (USGS, 1 h / 24 h / 7 d), wildfires (NASA FIRMS), active volcanoes and storms with their track (NASA EONET).
 - **Weather** — animated wind and temperature (NOAA GFS, current forecast hour), clouds (EUMETSAT, whole planet), rain radar (RainViewer), true-colour satellite image of the day and aerosols/pollution (NASA GIBS).
-- **Night** — night lights (NASA Black Marble 2016 or any night since March 2024) and live day/night with twilight.
+- **Night** — night lights (NASA Black Marble 2016 or any night since March 2024), **aurora forecast** (NOAA OVATION, next hour, with the Kp index) and live day/night with twilight.
 
 Plus:
 
@@ -59,6 +59,7 @@ The site is fully static and hosted on **GitHub Pages**.
 | Rain radar | RainViewer | Fetched directly |
 | Satellite, night lights, aerosols | NASA GIBS | Fetched directly (map tiles) |
 | Weather & air at a point, place search | Open-Meteo | Fetched directly |
+| Aurora forecast & Kp index | NOAA SWPC | Fetched directly |
 
 OpenSky and FIRMS don't allow requests from other websites (no CORS), so they are fetched server-side: by the GitHub Action (option A) or by a tiny Cloudflare Worker (option B). When both are configured, visitors can choose between them in the layers panel.
 
@@ -111,7 +112,7 @@ Without OpenSky credentials, set `CACHE_SECONDS` in `wrangler.toml` to `900` or 
 
 ## Credits
 
-Data: [USGS](https://earthquake.usgs.gov/), [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/), [NASA EONET](https://eonet.gsfc.nasa.gov/), [NASA GIBS](https://earthdata.nasa.gov/gibs), [NOAA GFS](https://www.nco.ncep.noaa.gov/pmb/products/gfs/), © [EUMETSAT](https://view.eumetsat.int/), [RainViewer](https://www.rainviewer.com/), [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), [OpenSky Network](https://opensky-network.org/), [wheretheiss.at](https://wheretheiss.at/), [CelesTrak](https://celestrak.org/).
+Data: [USGS](https://earthquake.usgs.gov/), [NASA FIRMS](https://firms.modaps.eosdis.nasa.gov/), [NASA EONET](https://eonet.gsfc.nasa.gov/), [NASA GIBS](https://earthdata.nasa.gov/gibs), [NOAA GFS](https://www.nco.ncep.noaa.gov/pmb/products/gfs/), © [EUMETSAT](https://view.eumetsat.int/), [RainViewer](https://www.rainviewer.com/), [Open-Meteo](https://open-meteo.com/) (CC BY 4.0), [NOAA SWPC](https://www.swpc.noaa.gov/), [OpenSky Network](https://opensky-network.org/), [wheretheiss.at](https://wheretheiss.at/), [CelesTrak](https://celestrak.org/).
 Maps: [OpenFreeMap](https://openfreemap.org/) · © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
 Rendering: [MapLibre GL JS](https://maplibre.org/).
 
