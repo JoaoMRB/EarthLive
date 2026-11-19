@@ -42,8 +42,8 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p public/data
-          for f in flights fires; do
-            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/$f.json" -o "public/data/$f.json" || true
+          for f in flights.json fires.json weather.json weather.png; do
+            curl -fsSL "${{ steps.pages.outputs.base_url }}/data/$f" -o "public/data/$f" || true
           done
 
       - name: Fetch data snapshots

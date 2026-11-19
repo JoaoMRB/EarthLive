@@ -12,6 +12,7 @@
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fetchFlights } from '../shared/opensky.mjs';
+import { fetchGfs, encodeWeatherPng, RANGES } from './gfs.mjs';
 
 const outDir = process.argv[2] ?? 'public/data';
 
@@ -96,6 +97,20 @@ async function save(name, build) {
   }
 }
 
+async function saveWeather() {
+  try {
+    const g = await fetchGfs();
+    await writeFile(join(outDir, 'weather.png'), encodeWeatherPng(g));
+    await writeFile(
+      join(outDir, 'weather.json'),
+      JSON.stringify({ runTime: g.runTime, validTime: g.validTime, width: g.nx, height: g.ny, ranges: RANGES, source: 'NOAA GFS 1°' }),
+    );
+    console.log(`weather: GFS run ${new Date(g.runTime * 1000).toISOString()} valid ${new Date(g.validTime * 1000).toISOString()}`);
+  } catch (err) {
+    console.warn(`weather: FAILED (${err.message}) — keeping previous files if any`);
+  }
+}
+
 await mkdir(outDir, { recursive: true });
 await Promise.all([
   save('flights.json', () =>
@@ -105,4 +120,5 @@ await Promise.all([
     }),
   ),
   save('fires.json', buildFires),
+  saveWeather(),
 ]);
